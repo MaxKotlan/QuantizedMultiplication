@@ -2,26 +2,36 @@ import numpy as np
 from multiplication_map_loader import load_multiplication_map, testFloat
 import matplotlib.pyplot as plt
 
-uint8_map = load_multiplication_map(256)
+# Load signed extended map
+uint8_map = load_multiplication_map(256, map_type='signed_ext')
 
-def testLongLivingChain(uint8_map, chain_length=50, seed=None):
+def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_ext'):
     if seed is not None:
         np.random.seed(seed)
 
+    fr_min, fr_max = -2, 2
     chain_data = []
 
-    # Start value <= 1
-    fa = np.random.uniform(0.9, 1.0)
+    # Start near 1
+    fa = np.random.uniform(0.9, 1.1)
     regular = fa
     mapped = fa
 
     for i in range(chain_length):
-        # Constrain fb so product <= 1 and never exceed 1
-        max_fb = min(1.0, 1.0 / regular)  # cap at 1
-        fb = np.random.uniform(0.9, max_fb)
+        # Sample fb near 1, but make sure we stay within range
+        # Allow slight fluctuation around 1
+        fb = np.random.uniform(0.9, 1.1)
 
+        # Clamp product to map range
         reg_result = regular * fb
-        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map)
+        if reg_result > fr_max:
+            fb = fr_max / max(regular, 1e-6)
+            reg_result = regular * fb
+        elif reg_result < fr_min:
+            fb = fr_min / min(regular, -1e-6)
+            reg_result = regular * fb
+
+        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type)
 
         abs_err = abs(map_val - reg_result)
         perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
@@ -58,7 +68,7 @@ def plotChain(chain_data, filename="chain_plot.png"):
     plt.plot(steps, mapped, 's-', label='Mapped multiplication')
     plt.plot(steps, errors, 'r--', label='Percent error (scaled 0-1)')
     
-    plt.title("Chained Multiplication: Regular vs Mapped")
+    plt.title("Chained Multiplication: Regular vs Mapped (Signed Extended)")
     plt.xlabel("Step")
     plt.ylabel("Value / Scaled Percent Error")
     plt.legend()
@@ -69,11 +79,11 @@ def plotChain(chain_data, filename="chain_plot.png"):
     print(f"Plot saved as {filename}")
     plt.close()
 
+
 if __name__ == "__main__":
-    chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=50)
+    chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=50, map_type='signed_ext')
     from pprint import pprint
     pprint(chain)
     print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
     
-    # Plot the chain
     plotChain(chain)
