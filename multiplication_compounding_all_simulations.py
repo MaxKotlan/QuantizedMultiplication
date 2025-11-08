@@ -1,9 +1,11 @@
 import numpy as np
 from multiplication_map_loader import load_multiplication_map, testFloat
 import matplotlib.pyplot as plt
+import os
 
-# Load signed extended map
-uint8_map = load_multiplication_map(256, map_type='signed_ext')
+# Ensure the simulation folder exists
+SIM_FOLDER = "simulation"
+os.makedirs(SIM_FOLDER, exist_ok=True)
 
 def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_ext'):
     if seed is not None:
@@ -18,8 +20,7 @@ def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_
     mapped = fa
 
     for i in range(chain_length):
-        # Sample fb near 1, but make sure we stay within range
-        # Allow slight fluctuation around 1
+        # Sample fb near 1
         fb = np.random.uniform(0.9, 1.1)
 
         # Clamp product to map range
@@ -56,8 +57,7 @@ def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_
 
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
-
-def plotChain(chain_data, filename="chain_plot.png"):
+def plotChain(chain_data, filename):
     steps = [step['step'] for step in chain_data]
     regular = [step['regular_result'] for step in chain_data]
     mapped = [step['mapped_result'] for step in chain_data]
@@ -67,23 +67,27 @@ def plotChain(chain_data, filename="chain_plot.png"):
     plt.plot(steps, regular, 'o-', label='Regular float')
     plt.plot(steps, mapped, 's-', label='Mapped multiplication')
     plt.plot(steps, errors, 'r--', label='Percent error (scaled 0-1)')
-    
-    plt.title("Chained Multiplication: Regular vs Mapped (Signed Extended)")
+
+    plt.title(f"Chained Multiplication")
     plt.xlabel("Step")
     plt.ylabel("Value / Scaled Percent Error")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    
-    plt.savefig(filename)
-    print(f"Plot saved as {filename}")
+
+    full_path = os.path.join(SIM_FOLDER, filename)
+    plt.savefig(full_path)
+    print(f"Plot saved as {full_path}")
     plt.close()
 
-
 if __name__ == "__main__":
-    chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=256, map_type='signed_ext')
-    from pprint import pprint
-    pprint(chain)
-    print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
+    map_sizes = [4, 8, 16, 32, 64, 128, 256]
     
-    plotChain(chain)
+    for size in map_sizes:
+        uint8_map = load_multiplication_map(size, map_type='signed_ext')
+        chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=256, map_type='signed_ext')
+        
+        print(f"\n=== Map size: {size} ===")
+        print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
+        
+        plotChain(chain, filename=f"chain_plot_{size}.png")
