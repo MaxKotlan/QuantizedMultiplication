@@ -23,8 +23,11 @@ def multiplyIntSpace(a, b, uint8_map):
     return uint8_map[x, y]
 
 def multiplyFloatSpace(fa, fb, uint8_map):
-    ia = round((fa + 1) * 127.5)
-    ib = round((fb + 1) * 127.5)
+    fac = np.clip(fa, -1.0, 1.0)
+    fbc = np.clip(fb, -1.0, 1.0)
+
+    ia = round((fac + 1) * 127.5)
+    ib = round((fbc + 1) * 127.5)
     ir = multiplyIntSpace(ia, ib, uint8_map)
     return (ir - 127.5) / 127.5
 
