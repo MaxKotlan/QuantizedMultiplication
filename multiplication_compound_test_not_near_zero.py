@@ -2,7 +2,7 @@ import numpy as np
 from multiplication_map_loader import load_multiplication_map, testFloat
 import matplotlib.pyplot as plt
 
-uint8_map = load_multiplication_map(64)
+uint8_map = load_multiplication_map(256)
 
 def testLongLivingChain(uint8_map, chain_length=50, seed=None):
     """
