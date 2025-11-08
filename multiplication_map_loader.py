@@ -14,10 +14,12 @@ uint8_map = load_multiplication_map(16)
 # print(uint8_map)
 
 
-def multiplyIntSpace(a,b,uint8_map):
-    size = uint8_map.shape[0]  # assume square map
+def multiplyIntSpace(a, b, uint8_map):
+    size = uint8_map.shape[0]
     x = int(a * (size-1) / 255)
     y = int(b * (size-1) / 255)
+    x = min(max(x, 0), size-1)
+    y = min(max(y, 0), size-1)
     return uint8_map[x, y]
 
 def multiplyFloatSpace(fa, fb, uint8_map):
