@@ -5,23 +5,20 @@ import matplotlib.pyplot as plt
 uint8_map = load_multiplication_map(256)
 
 def testLongLivingChain(uint8_map, chain_length=50, seed=None):
-    """
-    Generate a multiplication chain that avoids collapsing to zero.
-    Each step picks a multiplier in [0.9, 1.1] to maintain magnitude.
-    """
     if seed is not None:
         np.random.seed(seed)
 
     chain_data = []
 
-    # Start value
-    fa = np.random.uniform(0.9, 1.1)
+    # Start value <= 1
+    fa = np.random.uniform(0.9, 1.0)
     regular = fa
     mapped = fa
 
     for i in range(chain_length):
-        # Pick next multiplier that keeps the chain alive
-        fb = np.random.uniform(0.9, 1.1)
+        # Constrain fb so product <= 1 and never exceed 1
+        max_fb = min(1.0, 1.0 / regular)  # cap at 1
+        fb = np.random.uniform(0.9, max_fb)
 
         reg_result = regular * fb
         fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map)
@@ -73,7 +70,7 @@ def plotChain(chain_data, filename="chain_plot.png"):
     plt.close()
 
 if __name__ == "__main__":
-    chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=20)
+    chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=50)
     from pprint import pprint
     pprint(chain)
     print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
