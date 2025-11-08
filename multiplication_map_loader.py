@@ -22,6 +22,27 @@ def multiplyIntSpace(a, b, uint8_map):
     y = min(max(y, 0), size-1)
     return uint8_map[x, y]
 
+# this was generated and works.... but I dont understand really
+# def multiplyFloatSpace(fa, fb, uint8_map):
+#     size = uint8_map.shape[0]
+
+#     fac = np.clip(fa, -1.0, 1.0)
+#     fbc = np.clip(fb, -1.0, 1.0)
+
+#     # map [-1,1] → index 0..size-1
+#     ia = round((fac + 1) / 2 * (size-1))
+#     ib = round((fbc + 1) / 2 * (size-1))
+
+#     ia = min(max(ia, 0), size-1)
+#     ib = min(max(ib, 0), size-1)
+
+#     ir = uint8_map[ia, ib]
+
+#     # map 0..255 back to -1..1
+#     mapped = ir / 255 * 2 - 1
+#     return mapped
+
+
 def multiplyFloatSpace(fa, fb, uint8_map):
     fac = np.clip(fa, -1.0, 1.0)
     fbc = np.clip(fb, -1.0, 1.0)
