@@ -14,21 +14,23 @@ def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_
     fr_min, fr_max = -2, 2
     chain_data = []
 
-    # Start near 1
-    fa = np.random.uniform(0.9, 1.1)
+    fa = np.random.uniform(0.95, 1.05)
     regular = fa
     mapped = fa
 
     for i in range(chain_length):
+        # Slightly above or below 1, keeps chain stable
         fb = np.random.uniform(0.9, 1.1)
 
         # Clamp product to map range
         reg_result = regular * fb
         if reg_result > fr_max:
-            fb = fr_max / max(regular, 1e-6)
+            scale = fr_max / (reg_result + 1e-12)  # tiny epsilon to avoid div by zero
+            fb *= scale * 0.9 + 0.1  # blend factor (0.9) controls softness
             reg_result = regular * fb
         elif reg_result < fr_min:
-            fb = fr_min / min(regular, -1e-6)
+            scale = fr_min / (reg_result - 1e-12)
+            fb *= scale * 0.9 + 0.1
             reg_result = regular * fb
 
         fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type, method=method)
@@ -65,7 +67,7 @@ def plotChain(chain_data, filename):
     plt.figure(figsize=(10, 5))
     plt.plot(steps, regular, 'o-', label='Regular float')
     plt.plot(steps, mapped, 's-', label='Mapped multiplication')
-    plt.plot(steps, errors, 'r--', label='Percent error (scaled 0-1)')
+    # plt.plot(steps, errors, 'r--', label='Percent error (scaled 0-1)')
 
     plt.title(f"Chained Multiplication")
     plt.xlabel("Step")
@@ -87,7 +89,7 @@ if __name__ == "__main__":
         for size in map_sizes:
             uint8_map = load_multiplication_map(size, map_type='signed_ext')
             chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(
-                uint8_map, chain_length=256, map_type='signed_ext', method=method
+                uint8_map, chain_length=1024, map_type='signed_ext', method=method
             )
 
             print(f"\n=== Map size: {size}, Method: {method} ===")
