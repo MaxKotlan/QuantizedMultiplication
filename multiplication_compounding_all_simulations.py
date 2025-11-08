@@ -7,7 +7,7 @@ import os
 SIM_FOLDER = "simulation"
 os.makedirs(SIM_FOLDER, exist_ok=True)
 
-def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_ext'):
+def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_ext', method='interpolated'):
     if seed is not None:
         np.random.seed(seed)
 
@@ -20,7 +20,6 @@ def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_
     mapped = fa
 
     for i in range(chain_length):
-        # Sample fb near 1
         fb = np.random.uniform(0.9, 1.1)
 
         # Clamp product to map range
@@ -32,7 +31,7 @@ def testLongLivingChain(uint8_map, chain_length=50, seed=None, map_type='signed_
             fb = fr_min / min(regular, -1e-6)
             reg_result = regular * fb
 
-        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type)
+        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type, method=method)
 
         abs_err = abs(map_val - reg_result)
         perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
@@ -61,7 +60,7 @@ def plotChain(chain_data, filename):
     steps = [step['step'] for step in chain_data]
     regular = [step['regular_result'] for step in chain_data]
     mapped = [step['mapped_result'] for step in chain_data]
-    errors = [step['percent_error'] / 100.0 for step in chain_data]  # scale 0-1
+    errors = [step['percent_error'] / 100.0 for step in chain_data]
 
     plt.figure(figsize=(10, 5))
     plt.plot(steps, regular, 'o-', label='Regular float')
@@ -82,12 +81,16 @@ def plotChain(chain_data, filename):
 
 if __name__ == "__main__":
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
-    
-    for size in map_sizes:
-        uint8_map = load_multiplication_map(size, map_type='signed_ext')
-        chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(uint8_map, chain_length=256, map_type='signed_ext')
-        
-        print(f"\n=== Map size: {size} ===")
-        print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
-        
-        plotChain(chain, filename=f"chain_plot_{size}.png")
+    methods = ['nearest', 'interpolated']
+
+    for method in methods:
+        for size in map_sizes:
+            uint8_map = load_multiplication_map(size, map_type='signed_ext')
+            chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(
+                uint8_map, chain_length=256, map_type='signed_ext', method=method
+            )
+
+            print(f"\n=== Map size: {size}, Method: {method} ===")
+            print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
+
+            plotChain(chain, filename=f"chain_plot_{size}_{method}.png")
