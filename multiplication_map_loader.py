@@ -20,6 +20,7 @@ def multiplyIntSpace(a, b, uint8_map):
     y = int(b * (size-1) / 255)
     return uint8_map[x, y]
 
+#nearest neighbor (acc to ai gods)
 def multiplyFloatSpace(fa, fb, uint8_map, map_type='signed'):
     min_f, max_f = MAP_CONFIG[map_type]['float_range']
     scale = 255 / (max_f - min_f)
@@ -28,9 +29,39 @@ def multiplyFloatSpace(fa, fb, uint8_map, map_type='signed'):
     ir = multiplyIntSpace(ia, ib, uint8_map)
     return ir / scale + min_f
 
+#bilinear (acc to ai gods)
+def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed'):
+    min_f, max_f = MAP_CONFIG[map_type]['float_range']
+    size = uint8_map.shape[0]
+    scale = (size - 1) / (max_f - min_f)
+
+    # Map floats to float indices
+    x = (fa - min_f) * scale
+    y = (fb - min_f) * scale
+
+    # Integer parts
+    x0, y0 = int(np.floor(x)), int(np.floor(y))
+    x1, y1 = min(x0 + 1, size - 1), min(y0 + 1, size - 1)
+
+    # Fractions
+    fx, fy = x - x0, y - y0
+
+    # Bilinear interpolation
+    val = (
+        uint8_map[x0, y0] * (1 - fx) * (1 - fy) +
+        uint8_map[x1, y0] * fx * (1 - fy) +
+        uint8_map[x0, y1] * (1 - fx) * fy +
+        uint8_map[x1, y1] * fx * fy
+    )
+
+    # Scale back to float
+    float_val = val * (max_f - min_f) / 255 + min_f
+    return float_val
+
+
 def testFloat(fa, fb, uint8_map, map_type='signed'):
     regular = fa * fb
-    mapped_value = multiplyFloatSpace(fa, fb, uint8_map, map_type)
+    mapped_value = multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type)
     fr = MAP_CONFIG[map_type]['float_range']
     max_abs = max(abs(fr[0]), abs(fr[1]))
     error_percent = abs(mapped_value - regular) * 100 / max_abs
@@ -43,6 +74,7 @@ def printTestFloatResults(results):
     print(f"Error (positive %): {error_percent:.2f}%")
 
 # Example usage
-uint8_map = load_multiplication_map(16, 'signed_ext')
-results = testFloat(1.5, -1.0, uint8_map, 'signed_ext')
-printTestFloatResults(results)
+if __name__ == "__main__":
+    uint8_map = load_multiplication_map(16, 'signed_ext')
+    results = testFloat(1.5, -1.0, uint8_map, 'signed_ext')
+    printTestFloatResults(results)
