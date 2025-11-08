@@ -27,9 +27,13 @@ def generateSigned():
 
         for x in range(size):
             for y in range(size):
-                fx = (x - half) / half
-                fy = (y - half) / half
+                # fx = (x - half) / half
+                # fy = (y - half) / half
+                # fz = fx * fy
+                fx = (x - (size-1)/2) / ((size-1)/2)
+                fy = (y - (size-1)/2) / ((size-1)/2)
                 fz = fx * fy
+
                 gspace[x, y] = round((fz + 1) * 127.5)
 
         Image.fromarray(gspace).save(f'./multiplication_maps/signed_{size}x{size}.png')
