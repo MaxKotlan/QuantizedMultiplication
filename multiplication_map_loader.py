@@ -10,8 +10,8 @@ def load_multiplication_map(size, folder='./multiplication_maps'):
 
 
 uint8_map = load_multiplication_map(16)
-print(uint8_map.shape, uint8_map.dtype)
-print(uint8_map)
+# print(uint8_map.shape, uint8_map.dtype)
+# print(uint8_map)
 
 
 def multiplyIntSpace(a,b,uint8_map):

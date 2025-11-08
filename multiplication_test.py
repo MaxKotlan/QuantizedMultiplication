@@ -21,5 +21,5 @@ def printRandomMultiplicationResults(results_list):
         printTestFloatResults(results)
 
 # Example usage:
-results_list = testRandomMultiplications(uint8_map, num_tests=5, seed=42)
+results_list = testRandomMultiplications(uint8_map, num_tests=100)
 printRandomMultiplicationResults(results_list)
