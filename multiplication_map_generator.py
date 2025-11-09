@@ -58,7 +58,35 @@ def generateSignedExtended():
 
         Image.fromarray(gspace).save(f'./multiplication_maps/signed_extended_{size}x{size}.png')
 
+def generateSignedExtendedLog():
+    map_sizes = [4, 8, 16, 32, 64, 128, 256]
+
+    for size in map_sizes:
+        half = (size - 1) / 2
+        gspace = np.zeros((size, size), dtype=np.uint8)
+
+        for x in range(size):
+            for y in range(size):
+                fx = (x - half) / half * 2   # -2..2
+                fy = (y - half) / half * 2   # -2..2
+                fz = fx * fy                 # -4..4
+
+                # normalize
+                fz_norm = fz / 4             # -1..1
+
+                # signed log-like scaling
+                sign = np.sign(fz_norm)
+                abs_scaled = np.log1p(9 * np.abs(fz_norm)) / np.log(10)  # 0..1
+                fz_log = sign * abs_scaled
+
+                # map to 0..255
+                gspace[x, y] = np.clip(round((fz_log + 1) * 127.5), 0, 255)
+
+        Image.fromarray(gspace).save(f'./multiplication_maps/signed_log_{size}x{size}.png')
+
+
 generateUnsigned()
 generateSigned()
 generateSignedExtended()
+generateSignedExtendedLog()
 

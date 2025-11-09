@@ -82,15 +82,17 @@ if __name__ == "__main__":
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
     methods = ['nearest', 'interpolated']
+    map_types = ['signed_ext', 'signed_log']  # added signed_log here
 
     for method in methods:
-        for size in map_sizes:
-            uint8_map = load_multiplication_map(size, map_type='signed_ext')
-            chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(
-                uint8_map, fa_init, fb_seq, map_type='signed_ext', method=method
-            )
+        for map_type in map_types:
+            for size in map_sizes:
+                uint8_map = load_multiplication_map(size, map_type=map_type)
+                chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(
+                    uint8_map, fa_init, fb_seq, map_type=map_type, method=method
+                )
 
-            print(f"\n=== Map size: {size}, Method: {method} ===")
-            print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
+                print(f"\n=== Map type: {map_type}, Size: {size}, Method: {method} ===")
+                print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
 
-            plotChain(chain, filename=f"chain_plot_{size}_{method}.png")
+                plotChain(chain, filename=f"chain_plot_{map_type}_{size}_{method}.png")

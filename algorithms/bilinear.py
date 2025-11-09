@@ -1,11 +1,19 @@
 import numpy as np
 from multiplication_map_loader import MAP_CONFIG
+from log_helpers import float_to_log_index, log_index_to_float
 
 def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed'):
     min_f, max_f = MAP_CONFIG[map_type]['float_range']
     size = uint8_map.shape[0]
-    scale = (size - 1) / (max_f - min_f)
 
+    if map_type == 'signed_log':
+        # compute 4 surrounding indices
+        x = float_to_log_index(fa, min_f, max_f, size)
+        y = float_to_log_index(fb, min_f, max_f, size)
+        # for simplicity, nearest neighbor within log-space
+        return log_index_to_float(uint8_map[x, y], size, min_f, max_f)
+
+    scale = (size - 1) / (max_f - min_f)
     x = (fa - min_f) * scale
     y = (fb - min_f) * scale
 
