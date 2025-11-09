@@ -1,5 +1,6 @@
 import numpy as np
-from multiplication_map_loader import load_multiplication_map, testFloat
+from multiplication_map_loader import load_multiplication_map
+from test_float import testFloat
 import matplotlib.pyplot as plt
 import os
 import time
