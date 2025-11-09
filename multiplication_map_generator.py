@@ -58,6 +58,33 @@ def generateSignedExtended():
 
         Image.fromarray(gspace).save(f'./multiplication_maps/signed_extended_{size}x{size}.png')
 
+import numpy as np
+from PIL import Image
+
+def generateSignedExtendedWarped():
+    map_sizes = [4, 8, 16, 32, 64, 128, 256]
+
+    for size in map_sizes:
+        half = (size - 1) / 2
+        gspace = np.zeros((size, size), dtype=np.uint8)
+
+        for x in range(size):
+            for y in range(size):
+                fx = (x - half) / half * 2   # -2..2
+                fy = (y - half) / half * 2   # -2..2
+                fz = fx * fy                 # -4..4
+
+                # --- Nonlinear warping for more detail near zero ---
+                # asinh behaves ~linear near 0 but compresses extremes
+                k = 20.0  # larger = more zoom near zero
+                warped = np.sign(fz) * np.arcsinh(k * abs(fz)) / np.arcsinh(k * 4)
+
+                # Map warped -1..1 to 0..255
+                gspace[x, y] = round((warped * 0.5 + 0.5) * 255)
+
+        Image.fromarray(gspace).save(f'./multiplication_maps/signed_extended_warped_{size}x{size}.png')
+
+
 def generateSignedExtendedLog():
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
 
@@ -89,4 +116,5 @@ generateUnsigned()
 generateSigned()
 generateSignedExtended()
 generateSignedExtendedLog()
+generateSignedExtendedWarped()
 

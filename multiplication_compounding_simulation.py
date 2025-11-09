@@ -60,8 +60,8 @@ if __name__ == "__main__":
 
     # map_sizes = [4, 8, 16, 32, 64, 128, 256]
     map_sizes = [256]
-    methods = ['nearest', 'interpolated']
-    map_types = ['signed_ext', 'signed_log']  # added signed_log here
+    methods = ['nearest']#, 'interpolated']
+    map_types = ['signed_ext', 'signed_log']#, 'signed_ext_warped']  # added signed_log here
 
     for method in methods:
         for map_type in map_types:

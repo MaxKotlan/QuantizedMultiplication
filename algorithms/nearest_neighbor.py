@@ -24,6 +24,14 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
         abs_val = np.abs(fz_log)
         fz = sign * ((10 ** abs_val - 1) / 9) * 4  # inverse of encoding
         return fz
+    elif map_type == 'signed_ext_warp':
+        k = 20.0
+        fr_min, fr_max = MAP_CONFIG[map_type]['float_range']
+        fz_norm = (ir / 127.5) - 1
+        sign = np.sign(fz_norm)
+        abs_val = np.abs(fz_norm)
+        fz = sign * np.sinh(abs_val * np.arcsinh(k * (fr_max ** 2))) / k
+        return fz  # <-- don't rescale here
     else:
         # Linear decode
         return ir / scale + min_f
