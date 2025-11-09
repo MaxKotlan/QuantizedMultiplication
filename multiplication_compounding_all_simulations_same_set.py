@@ -1,13 +1,8 @@
 import numpy as np
 from multiplication_map_loader import load_multiplication_map
 from test_float import testFloat
-import matplotlib.pyplot as plt
-import os
+from graph import plotChain
 import time
-
-# Ensure the simulation folder exists
-SIM_FOLDER = "simulation"
-os.makedirs(SIM_FOLDER, exist_ok=True)
 
 def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated'):
     fr_min, fr_max = -2, 2
@@ -52,24 +47,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
 
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
-def plotChain(chain_data, filename):
-    steps = [step['step'] for step in chain_data]
-    regular = [step['regular_result'] for step in chain_data]
-    mapped = [step['mapped_result'] for step in chain_data]
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(steps, regular, 'o-', label='Regular float')
-    plt.plot(steps, mapped, 's-', label='Mapped multiplication')
-    plt.title(f"Chained Multiplication")
-    plt.xlabel("Step")
-    plt.ylabel("Value")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    full_path = os.path.join(SIM_FOLDER, filename)
-    plt.savefig(full_path)
-    print(f"Plot saved as {full_path}")
-    plt.close()
 
 if __name__ == "__main__":
     seed = int(time.time()) % (2**32 - 1)
@@ -80,7 +58,8 @@ if __name__ == "__main__":
     fa_init = np.random.uniform(0.95, 1.05)
     fb_seq = np.random.uniform(0.9, 1.1, size=chain_length)
 
-    map_sizes = [4, 8, 16, 32, 64, 128, 256]
+    # map_sizes = [4, 8, 16, 32, 64, 128, 256]
+    map_sizes = [256]
     methods = ['nearest', 'interpolated']
     map_types = ['signed_ext', 'signed_log']  # added signed_log here
 
