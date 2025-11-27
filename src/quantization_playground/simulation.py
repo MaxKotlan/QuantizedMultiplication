@@ -97,7 +97,18 @@ def main() -> None:
                 print(f"\n=== Map type: {map_type}, Size: {size}, Method: {method} ===")
                 print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
 
-                plotChain(chain, filename=f"chain_plot_{map_type}_{size}_{method}.png", float_range=float_range)
+                legend_labels = {
+                    "float": "Reference (float64)",
+                    "mapped": f"Lookup ({map_type}, {method})",
+                }
+                plot_title = f"{map_type} map size {size} ({method})"
+                plotChain(
+                    chain,
+                    filename=f"chain_plot_{map_type}_{size}_{method}.png",
+                    float_range=float_range,
+                    title=plot_title,
+                    legend_labels=legend_labels,
+                )
 
 
 if __name__ == "__main__":
