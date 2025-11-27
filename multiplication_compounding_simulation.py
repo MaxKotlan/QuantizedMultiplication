@@ -64,9 +64,14 @@ if __name__ == "__main__":
     print(f"Using seed: {seed}, max_range: {max_range}")
     chain_length = 1024
 
-    # Generate the same initial float and sequence for all simulations
-    fa_init = np.random.uniform(0.95, 1.05)
-    fb_seq = np.random.uniform(0.9, 1.1, size=chain_length)
+    # Generate the same initial float and sequence for all simulations,
+    # scaled to stay inside the chosen float_range (helps when max_range < 1)
+    base_mag = 0.5 * max_range  # center of walk
+    init_jitter = 0.05
+    fa_init = np.random.uniform(base_mag * (1 - init_jitter), base_mag * (1 + init_jitter))
+
+    jitter = min(0.1, 0.25 * max_range)  # shrink step size when range is small
+    fb_seq = np.random.uniform(1 - jitter, 1 + jitter, size=chain_length)
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
     methods = ['nearest', 'interpolated']
