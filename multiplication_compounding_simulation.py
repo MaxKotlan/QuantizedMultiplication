@@ -50,8 +50,9 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
 
 
 if __name__ == "__main__":
-    seed = int(time.time()) % (2**32 - 1)
-    np.random.seed(seed)  # reproducible sequence across all simulations
+    seed = time.time_ns() % (2**32 - 1)  # new seed each script run, shared by all variants
+    np.random.seed(seed)
+    print(f"Using seed: {seed}")
     chain_length = 1024
 
     # Generate the same initial float and sequence for all simulations
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     fb_seq = np.random.uniform(0.9, 1.1, size=chain_length)
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
-    methods = ['nearest']#, 'interpolated']
+    methods = ['nearest', 'interpolated']
     map_types = ['signed_ext', 'signed_log']#, 'signed_ext_warped']  # added signed_log here
 
     for method in methods:

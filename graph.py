@@ -17,6 +17,9 @@ def plotChain(chain_data, filename):
     plt.title(f"Chained Multiplication")
     plt.xlabel("Step")
     plt.ylabel("Value")
+    # Fix axes so different runs are directly comparable
+    plt.xlim(0, max(steps) if steps else 1)
+    plt.ylim(-2.2, 2.2)
     plt.legend()
     plt.grid(True)
     plt.tight_layout()

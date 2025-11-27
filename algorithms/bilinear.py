@@ -7,6 +7,10 @@ def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed'):
     map_max = np.max(uint8_map)
     scale = (size - 1) / (max_f - min_f)
 
+    # Clamp inputs to representable float range to avoid index overflow
+    fa = np.clip(fa, min_f, max_f)
+    fb = np.clip(fb, min_f, max_f)
+
     x = (fa - min_f) * scale
     y = (fb - min_f) * scale
 

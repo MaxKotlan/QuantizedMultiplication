@@ -14,6 +14,10 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
     map_max = np.max(uint8_map)
     scale_in = (size - 1) / (max_f - min_f)
 
+    # Clamp inputs to representable float range to avoid index overflow
+    fa = np.clip(fa, min_f, max_f)
+    fb = np.clip(fb, min_f, max_f)
+
     # Map floats to map index space (0..size-1)
     ia = int(np.clip(round((fa - min_f) * scale_in), 0, size - 1))
     ib = int(np.clip(round((fb - min_f) * scale_in), 0, size - 1))
