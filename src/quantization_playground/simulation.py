@@ -7,7 +7,43 @@ from .evaluation import evaluate_float
 from .plotting import plotChain
 
 
-def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False):
+def _detect_float8_dtype():
+    """Return a usable float8 dtype if NumPy supports it, else None."""
+    candidates = (
+        "float8_e4m3fn",
+        "float8_e4m3fnuz",
+        "float8_e5m2",
+        "float8_e5m2fnuz",
+    )
+    for name in candidates:
+        try:
+            return np.dtype(name)
+        except TypeError:
+            continue
+    return None
+
+
+FLOAT8_DTYPE = _detect_float8_dtype()
+BASELINE_CHOICES = ["float8", "float16", "float32", "float64"]
+
+
+def _resolve_baseline_dtype(name: str) -> tuple[np.dtype, str]:
+    """
+    Resolve the desired baseline dtype.
+
+    Returns (dtype, label). If float8 is requested but unsupported, falls back
+    to float16 and labels the run accordingly.
+    """
+    if name == "float8":
+        if FLOAT8_DTYPE:
+            return FLOAT8_DTYPE, "float8"
+        print("float8 not supported by this NumPy build; falling back to float16.")
+        return np.dtype("float16"), "float8 (via float16 fallback)"
+    dtype = np.dtype(name)
+    return dtype, dtype.name
+
+
+def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False, baseline_dtype=np.float32):
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
     chain_data = []
@@ -27,7 +63,16 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
             fb *= scale * 0.9 + 0.1
             reg_result = regular * fb
 
-        fa_val, fb_val, reg_val, map_val, err = evaluate_float(mapped, fb, uint8_map, map_type=map_type, method=method, float_range=float_range, stochastic_round=stochastic_round)
+        fa_val, fb_val, reg_val, map_val, err = evaluate_float(
+            mapped,
+            fb,
+            uint8_map,
+            map_type=map_type,
+            method=method,
+            float_range=float_range,
+            stochastic_round=stochastic_round,
+            baseline_dtype=baseline_dtype,
+        )
         abs_err = abs(map_val - reg_result)
         perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
 
@@ -56,10 +101,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run chained multiplication simulations.")
     parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
     parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
+    parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Precision used for the reference multiply (float8 falls back to float16 if unsupported).")
     args = parser.parse_args()
 
     max_range = float(args.max_range)
     float_range = (-max_range, max_range)
+    baseline_dtype, baseline_label = _resolve_baseline_dtype(args.baseline_dtype)
 
     seed = time.time_ns() % (2**32 - 1)  # new seed each script run, shared by all variants
     np.random.seed(seed)
@@ -70,10 +117,10 @@ def main() -> None:
     # scaled to stay inside the chosen float_range (helps when max_range < 1)
     base_mag = 0.5 * max_range  # center of walk
     init_jitter = 0.05
-    fa_init = np.random.uniform(base_mag * (1 - init_jitter), base_mag * (1 + init_jitter))
+    fa_init = baseline_dtype.type(np.random.uniform(base_mag * (1 - init_jitter), base_mag * (1 + init_jitter)))
 
     jitter = min(0.1, 0.2 * max_range)  # shrink step size when range is small
-    fb_seq = np.random.uniform(1 - jitter, 1 + jitter, size=chain_length)
+    fb_seq = np.random.uniform(1 - jitter, 1 + jitter, size=chain_length).astype(baseline_dtype)
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
     methods = ['nearest', 'interpolated']
@@ -91,14 +138,14 @@ def main() -> None:
             for size in map_sizes:
                 uint8_map = maps_by_type[map_type][size]
                 chain, f_reg, f_map, f_abs, f_perc = testLongLivingChain(
-                    uint8_map, fa_init, fb_seq, map_type=map_type, method=method, float_range=float_range
+                    uint8_map, fa_init, fb_seq, map_type=map_type, method=method, float_range=float_range, baseline_dtype=baseline_dtype
                 )
 
                 print(f"\n=== Map type: {map_type}, Size: {size}, Method: {method} ===")
                 print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
 
                 legend_labels = {
-                    "float": "Reference (float64)",
+                    "float": f"Reference ({baseline_label})",
                     "mapped": f"Lookup ({map_type}, {method})",
                 }
                 plot_title = f"{map_type} map size {size} ({method})"

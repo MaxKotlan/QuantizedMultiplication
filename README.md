@@ -26,10 +26,11 @@ python -m pip install -e .
 2) Run a simulation (maps are auto‑generated if missing for the given range):
 ```bash
 MPLCONFIGDIR="$PWD/.mplconfig" . .venv/bin/activate && \
-python -m quantization_playground.simulation --max-range 2.0 --steps 1024
+python -m quantization_playground.simulation --max-range 2.0 --steps 1024 --baseline-dtype float16
 ```
 - `--max-range`: symmetric range ±R encoded in the maps (default 2.0).
 - `--steps`: length of the multiplication chain (default 1024).
+- `--baseline-dtype`: reference precision (`float16` by default; `float32`/`float64` available; `float8` if your NumPy build supports it, otherwise it falls back to float16 with a note).
 
 Outputs:
 - Plots in `data/simulation/chain_plot_<map>_<size>_<method>.png`.

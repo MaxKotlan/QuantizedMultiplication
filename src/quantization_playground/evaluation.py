@@ -1,10 +1,24 @@
+import numpy as np
+
 from .maps import MAP_CONFIG, load_multiplication_map
 from .algorithms import nearest_neighbor, bilinear
 
 
-def evaluate_float(fa, fb, uint8_map, map_type='signed', method='interpolated', float_range=None, stochastic_round=False):
+def evaluate_float(
+    fa,
+    fb,
+    uint8_map,
+    map_type='signed',
+    method='interpolated',
+    float_range=None,
+    stochastic_round=False,
+    baseline_dtype=np.float32,
+):
     """Compare float multiplication vs. lookup-table approximation."""
-    regular = fa * fb
+    dtype = np.dtype(baseline_dtype)
+    fa_ref = dtype.type(fa)
+    fb_ref = dtype.type(fb)
+    regular = fa_ref * fb_ref
     if method == 'nearest':
         mapped_value = nearest_neighbor.multiplyFloatSpaceNN(fa, fb, uint8_map, map_type, float_range=float_range, stochastic_round=stochastic_round)
     else:

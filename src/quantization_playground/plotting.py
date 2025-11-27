@@ -14,7 +14,7 @@ def plotChain(chain_data, filename, float_range=None, title=None, legend_labels=
     max_range = max(abs(float_range[0]), abs(float_range[1])) if float_range else 2.0
     margin = max_range * 0.1
 
-    labels = legend_labels or {"float": "Reference (float64)", "mapped": "Lookup table"}
+    labels = legend_labels or {"float": "Reference (float16)", "mapped": "Lookup table"}
     plot_title = title or "Quantized vs float chain"
 
     plt.figure(figsize=(10, 5))
