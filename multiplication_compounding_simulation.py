@@ -58,8 +58,7 @@ if __name__ == "__main__":
     fa_init = np.random.uniform(0.95, 1.05)
     fb_seq = np.random.uniform(0.9, 1.1, size=chain_length)
 
-    # map_sizes = [4, 8, 16, 32, 64, 128, 256]
-    map_sizes = [256]
+    map_sizes = [4, 8, 16, 32, 64, 128, 256]
     methods = ['nearest']#, 'interpolated']
     map_types = ['signed_ext', 'signed_log']#, 'signed_ext_warped']  # added signed_log here
 

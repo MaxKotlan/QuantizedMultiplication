@@ -3,30 +3,30 @@ import numpy as np
 
 def _multiplyIntSpace(a, b, uint8_map):
     size = uint8_map.shape[0]  # assume square
-    x = int(np.clip(a * (size - 1) / 255, 0, size - 1))
-    y = int(np.clip(b * (size - 1) / 255, 0, size - 1))
+    # a, b are already in map index space
+    x = int(np.clip(a, 0, size - 1))
+    y = int(np.clip(b, 0, size - 1))
     return uint8_map[x, y]
 
 def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
     min_f, max_f = MAP_CONFIG[map_type]['float_range']
-    scale = 255 / (max_f - min_f)
+    size = uint8_map.shape[0]
+    map_max = np.max(uint8_map)
+    scale_in = (size - 1) / (max_f - min_f)
 
-    # Map floats to uint8 input indices
-    ia = int(np.clip(round((fa - min_f) * scale), 0, 255))
-    ib = int(np.clip(round((fb - min_f) * scale), 0, 255))
+    # Map floats to map index space (0..size-1)
+    ia = int(np.clip(round((fa - min_f) * scale_in), 0, size - 1))
+    ib = int(np.clip(round((fb - min_f) * scale_in), 0, size - 1))
     
     ir = _multiplyIntSpace(ia, ib, uint8_map)
 
     if map_type == 'signed_log':
-        fr_min, fr_max = MAP_CONFIG[map_type]['float_range']
-        max_mag = max(abs(fr_min), abs(fr_max))
-
+        half_max = max(map_max / 2, 1e-9)
         # Decode logarithmic mapping
-        fz_log = (ir / 127.5) - 1
+        fz_log = (ir / half_max) - 1
         sign = np.sign(fz_log)
         abs_val = np.abs(fz_log)
-        fz_norm = (10 ** abs_val - 1) / 9  # inverse of log1p scale
-        fz = sign * fz_norm * max_mag
+        fz = sign * ((10 ** abs_val - 1) / 9) * 4  # inverse of encoding (fz_norm * 4)
         return fz
     elif map_type == 'signed_ext_warp':
         k = 20.0
@@ -38,4 +38,5 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
         return fz  # <-- don't rescale here
     else:
         # Linear decode
-        return ir / scale + min_f
+        scale_out = map_max / (max_f - min_f)
+        return ir / scale_out + min_f
