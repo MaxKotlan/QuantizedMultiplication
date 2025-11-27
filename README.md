@@ -7,7 +7,6 @@ This repo explores “integer space” multiplication via precomputed lookup tab
 - `src/quantization_playground/algorithms/`: nearest-neighbor lookup with optional stochastic rounding + bilinear interpolation.
 - `src/quantization_playground/simulation.py`: runs long chains of multiplies, compares against float, saves plots.
 - `src/quantization_playground/plotting.py`: plotting helper targeting `data/simulation/`.
-- `scripts/run_simulation.py`: thin CLI wrapper around the simulation entrypoint.
 - `data/`: generated artifacts (`multiplication_maps/` + `simulation/`); gitignored except for `.gitkeep`.
 - `examples/simulation_runs/`: example chain plots from previous runs.
 - `tests/`: quick smoke tests that exercise the lookup + interpolation paths.
@@ -28,7 +27,6 @@ python -m pip install -e .
 ```bash
 MPLCONFIGDIR="$PWD/.mplconfig" . .venv/bin/activate && \
 python -m quantization_playground.simulation --max-range 2.0 --steps 1024
-# or: python scripts/run_simulation.py --max-range 2.0 --steps 1024
 ```
 - `--max-range`: symmetric range ±R encoded in the maps (default 2.0).
 - `--steps`: length of the multiplication chain (default 1024).
