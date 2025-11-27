@@ -13,9 +13,19 @@ def _prepare_output_dir(output_dir: Path) -> Path:
     return output_dir
 
 
+def _bit_depth(size: int) -> int:
+    return int(np.ceil(np.log2(size))) if size > 0 else 0
+
+
+def _size_subdir(output_dir: Path, size: int) -> Path:
+    bit_dir = output_dir / f"{_bit_depth(size)}bit"
+    bit_dir.mkdir(parents=True, exist_ok=True)
+    return bit_dir
+
+
 def generateUnsigned(suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
-    output_dir = _prepare_output_dir(output_dir)
     for size in MAP_SIZES:
+        target_dir = _size_subdir(output_dir, size)
         gspace = np.zeros((size, size))
         for x in range(size):
             for y in range(size):
@@ -25,12 +35,12 @@ def generateUnsigned(suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
                 g = round(r * size)
                 gspace[x, y] = g * (256 // size)
 
-        Image.fromarray(gspace.astype(np.uint8)).save(output_dir / f"unsigned_{size}x{size}{suffix}.png")
+        Image.fromarray(gspace.astype(np.uint8)).save(target_dir / f"unsigned_{size}x{size}{suffix}.png")
 
 
 def generateSigned(suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
-    output_dir = _prepare_output_dir(output_dir)
     for size in MAP_SIZES:
+        target_dir = _size_subdir(output_dir, size)
         gspace = np.zeros((size, size), dtype=np.uint8)
         for x in range(size):
             for y in range(size):
@@ -39,12 +49,12 @@ def generateSigned(suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
                 fz = fx * fy
                 gspace[x, y] = round((fz + 1) * 127.5)
 
-        Image.fromarray(gspace).save(output_dir / f"signed_{size}x{size}{suffix}.png")
+        Image.fromarray(gspace).save(target_dir / f"signed_{size}x{size}{suffix}.png")
 
 
 def generateSignedExtended(max_range: float = 2.0, suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
-    output_dir = _prepare_output_dir(output_dir)
     for size in MAP_SIZES:
+        target_dir = _size_subdir(output_dir, size)
         half = (size - 1) / 2
         max_val = size - 1
         half_range = max_val / 2
@@ -58,12 +68,12 @@ def generateSignedExtended(max_range: float = 2.0, suffix: str = "", output_dir:
                 fz_clamped = np.clip(fz, -max_range, max_range)
                 gspace[x, y] = np.clip(round((fz_clamped / max_range) * half_range + half_range), 0, max_val)
 
-        Image.fromarray(gspace).save(output_dir / f"signed_extended_{size}x{size}{suffix}.png")
+        Image.fromarray(gspace).save(target_dir / f"signed_extended_{size}x{size}{suffix}.png")
 
 
 def generateSignedExtendedWarped(max_range: float = 2.0, suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
-    output_dir = _prepare_output_dir(output_dir)
     for size in MAP_SIZES:
+        target_dir = _size_subdir(output_dir, size)
         half = (size - 1) / 2
         max_val = size - 1
         gspace = np.zeros((size, size), dtype=np.uint8)
@@ -80,12 +90,12 @@ def generateSignedExtendedWarped(max_range: float = 2.0, suffix: str = "", outpu
                 warped = np.sign(fz) * np.arcsinh(k * abs(fz)) / np.arcsinh(k * max_prod)
                 gspace[x, y] = np.clip(round((warped * 0.5 + 0.5) * max_val), 0, max_val)
 
-        Image.fromarray(gspace).save(output_dir / f"signed_extended_warped_{size}x{size}{suffix}.png")
+        Image.fromarray(gspace).save(target_dir / f"signed_extended_warped_{size}x{size}{suffix}.png")
 
 
 def generateSignedExtendedLog(max_range: float = 2.0, suffix: str = "", output_dir: Path = MAPS_DIR) -> None:
-    output_dir = _prepare_output_dir(output_dir)
     for size in MAP_SIZES:
+        target_dir = _size_subdir(output_dir, size)
         half = (size - 1) / 2
         max_val = size - 1
         half_range = max_val / 2
@@ -104,7 +114,7 @@ def generateSignedExtendedLog(max_range: float = 2.0, suffix: str = "", output_d
                 fz_log = sign * abs_scaled
                 gspace[x, y] = np.clip(round((fz_log + 1) * half_range), 0, max_val)
 
-        Image.fromarray(gspace).save(output_dir / f"signed_log_{size}x{size}{suffix}.png")
+        Image.fromarray(gspace).save(target_dir / f"signed_log_{size}x{size}{suffix}.png")
 
 
 def main(max_range: float | None = None, suffix: str | None = None, output_dir: Path | None = None) -> None:

@@ -3,7 +3,7 @@
 This repo explores “integer space” multiplication via precomputed lookup tables and compares it against native floating‑point math. The goal is to understand how much error accumulates when products are approximated with low‑precision tables (e.g., uint8 grids), and whether the approach could be viable for integer‑friendly hardware (think faster integer pipelines, quantized ML, or embedded settings).
 
 ## What’s here
-- `src/quantization_playground/maps/`: PNG map generator/loader (`ensure_multiplication_maps` auto-generates).
+- `src/quantization_playground/maps/`: PNG map generator/loader (`ensure_multiplication_maps` auto-generates). Maps are grouped under `data/multiplication_maps/<bits>bit/` based on their effective value levels (e.g., `8bit/` holds the 256×256 tables).
 - `src/quantization_playground/algorithms/`: nearest-neighbor lookup with optional stochastic rounding + bilinear interpolation.
 - `src/quantization_playground/simulation.py`: runs long chains of multiplies, compares against float, saves plots.
 - `src/quantization_playground/plotting.py`: plotting helper targeting `data/simulation/`.
@@ -33,7 +33,7 @@ python -m quantization_playground.simulation --max-range 2.0 --steps 1024 --base
 - `--baseline-dtype`: reference precision (`float16` by default; `float32`/`float64` available; `float8` if your NumPy build supports it, otherwise it falls back to float16 with a note).
 
 Outputs:
-- Plots in `data/simulation/chain_plot_<map>_<size>_<method>.png`.
+- Plots in `data/simulation/<bits>bit/chain_plot_<map>_<size>_<method>.png` (bits reflect map size: 4×4→2bit, …, 256×256→8bit).
 - Console summary of final errors per variant.
 
 ## Working with ranges < 1
@@ -46,6 +46,7 @@ Maps are normally generated on demand by the simulation. To regenerate explicitl
 python -m quantization_playground.maps.generator --max-range 2.0 --output-dir data/multiplication_maps
 ```
 Files are written to `data/multiplication_maps/` with a `_r<range>` suffix.
+Maps are organized by effective value depth: `2bit/` (4×4), `3bit/` (8×8), …, `8bit/` (256×256).
 
 ## Interpreting results
 - **Map size**: Larger grids (e.g., 256×256) track floats better; tiny grids diverge fast.

@@ -43,6 +43,11 @@ def _resolve_baseline_dtype(name: str) -> tuple[np.dtype, str]:
     return dtype, dtype.name
 
 
+def _value_bits_for_size(size: int) -> int:
+    """Effective value bits given the discrete levels in the table."""
+    return int(np.ceil(np.log2(size))) if size > 0 else 0
+
+
 def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False, baseline_dtype=np.float32):
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
@@ -144,17 +149,23 @@ def main() -> None:
                 print(f"\n=== Map type: {map_type}, Size: {size}, Method: {method} ===")
                 print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
 
+                value_bits = _value_bits_for_size(size)
                 legend_labels = {
-                    "float": f"Reference ({baseline_label})",
-                    "mapped": f"Lookup ({map_type}, {method})",
+                    "float": f"Baseline {baseline_label}",
+                    "mapped": f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit",
                 }
-                plot_title = f"{map_type} map size {size} ({method})"
+                plot_title = f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit vs {baseline_label}"
+                lookup_label = f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit"
+                filename = f"{value_bits}bit/chain_plot_{map_type}_{size}_{method}.png"
                 plotChain(
                     chain,
-                    filename=f"chain_plot_{map_type}_{size}_{method}.png",
+                    filename=filename,
                     float_range=float_range,
                     title=plot_title,
                     legend_labels=legend_labels,
+                    baseline_label=f"Baseline {baseline_label}",
+                    lookup_label=lookup_label,
+                    value_bits=value_bits,
                 )
 
 

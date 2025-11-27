@@ -14,10 +14,15 @@ MAP_CONFIG = {
 }
 
 
+def _bit_depth(size: int) -> int:
+    return int(np.ceil(np.log2(size))) if size > 0 else 0
+
+
 def _map_path(size: int, cfg: dict, suffix: str = "") -> Path:
     folder = Path(cfg["folder"])
-    folder.mkdir(parents=True, exist_ok=True)
-    return folder / f"{cfg['prefix']}_{size}x{size}{suffix}.png"
+    bit_dir = folder / f"{_bit_depth(size)}bit"
+    bit_dir.mkdir(parents=True, exist_ok=True)
+    return bit_dir / f"{cfg['prefix']}_{size}x{size}{suffix}.png"
 
 
 def load_multiplication_map(size: int, map_type: str = "signed", suffix: str = "") -> np.ndarray:
