@@ -30,7 +30,7 @@ def load_multiplication_map(size: int, map_type: str = "signed", suffix: str = "
     cfg = MAP_CONFIG[map_type]
     path = _map_path(size, cfg, suffix)
     img = Image.open(path)
-    return np.array(img, dtype=np.uint8)
+    return np.array(img)
 
 
 def ensure_multiplication_maps(map_sizes: Iterable[int], map_type: str = "signed", max_range: float = 2.0) -> dict[int, np.ndarray]:
@@ -49,6 +49,6 @@ def ensure_multiplication_maps(map_sizes: Iterable[int], map_type: str = "signed
         generate_maps(max_range=max_range, suffix=suffix, output_dir=cfg["folder"])
 
     return {
-        size: np.array(Image.open(path), dtype=np.uint8)
+        size: np.array(Image.open(path))
         for size, path in zip(map_sizes, expected_files)
     }

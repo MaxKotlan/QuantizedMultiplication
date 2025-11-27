@@ -120,7 +120,7 @@ def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "flo
     jitter = min(0.1, 0.2 * max_range)  # shrink step size when range is small
     fb_seq = np.random.uniform(1 - jitter, 1 + jitter, size=chain_length).astype(baseline_dtype)
 
-    map_sizes = [4, 8, 16, 32, 64, 128, 256]
+    map_sizes = [4, 8, 16, 32, 64, 128, 256, 512]
     methods = ['nearest', 'interpolated']
     map_types = ['signed_ext', 'signed_log']
 

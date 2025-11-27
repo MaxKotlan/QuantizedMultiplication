@@ -35,7 +35,7 @@ python -m quantization_playground.simulation --max-range 2.0 --steps 1024 --base
 - `--baseline-dtype`: reference precision (`float16` by default; `float32`/`float64` available; `float8` if your NumPy build supports it, otherwise it falls back to float16 with a note).
 
 Outputs:
-- Plots in `data/simulation/<bits>bit/chain_plot_<map>_<size>_<method>.png` (bits reflect map size: 4×4→2bit, …, 256×256→8bit).
+- Plots in `data/simulation/<bits>bit/chain_plot_<map>_<size>_<method>.png` (bits reflect map size: 4×4→2bit, …, 512×512→9bit).
 - Console summary of final errors per variant.
 
 ## Working with ranges < 1
@@ -48,7 +48,7 @@ Maps are normally generated on demand by the simulation. To regenerate explicitl
 python -m quantization_playground.maps.generator --max-range 2.0 --output-dir data/multiplication_maps
 ```
 Files are written to `data/multiplication_maps/` with a `_r<range>` suffix.
-Maps are organized by effective value depth: `2bit/` (4×4), `3bit/` (8×8), …, `8bit/` (256×256).
+Maps are organized by effective value depth: `2bit/` (4×4), `3bit/` (8×8), …, `8bit/` (256×256), `9bit/` (512×512).
 
 ## Interpreting results
 - **Map size**: Larger grids (e.g., 256×256) track floats better; tiny grids diverge fast.
