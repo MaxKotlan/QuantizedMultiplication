@@ -1,10 +1,10 @@
 from multiplication_map_loader import load_multiplication_map, MAP_CONFIG
 from algorithms import nearest_neighbor, bilinear
 
-def testFloat(fa, fb, uint8_map, map_type='signed', method='interpolated', float_range=None):
+def testFloat(fa, fb, uint8_map, map_type='signed', method='interpolated', float_range=None, stochastic_round=False):
     regular = fa * fb
     if method == 'nearest':
-        mapped_value = nearest_neighbor.multiplyFloatSpaceNN(fa, fb, uint8_map, map_type, float_range=float_range)
+        mapped_value = nearest_neighbor.multiplyFloatSpaceNN(fa, fb, uint8_map, map_type, float_range=float_range, stochastic_round=stochastic_round)
     else:
         mapped_value = bilinear.multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type, float_range=float_range)
 

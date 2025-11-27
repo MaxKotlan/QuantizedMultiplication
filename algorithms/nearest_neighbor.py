@@ -8,7 +8,7 @@ def _multiplyIntSpace(a, b, uint8_map):
     y = int(np.clip(b, 0, size - 1))
     return uint8_map[x, y]
 
-def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext', float_range=None):
+def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext', float_range=None, stochastic_round=False):
     min_f, max_f = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     size = uint8_map.shape[0]
     map_max = np.max(uint8_map)
@@ -19,8 +19,12 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext', float_range=N
     fb = np.clip(fb, min_f, max_f)
 
     # Map floats to map index space (0..size-1)
-    ia = int(np.clip(round((fa - min_f) * scale_in), 0, size - 1))
-    ib = int(np.clip(round((fb - min_f) * scale_in), 0, size - 1))
+    if stochastic_round:
+        ia = int(np.clip(np.floor((fa - min_f) * scale_in + np.random.random()), 0, size - 1))
+        ib = int(np.clip(np.floor((fb - min_f) * scale_in + np.random.random()), 0, size - 1))
+    else:
+        ia = int(np.clip(round((fa - min_f) * scale_in), 0, size - 1))
+        ib = int(np.clip(round((fb - min_f) * scale_in), 0, size - 1))
     
     ir = _multiplyIntSpace(ia, ib, uint8_map)
 

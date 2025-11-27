@@ -5,7 +5,7 @@ from test_float import testFloat
 from graph import plotChain
 import time
 
-def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None):
+def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False):
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
     chain_data = []
@@ -25,7 +25,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
             fb *= scale * 0.9 + 0.1
             reg_result = regular * fb
 
-        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type, method=method, float_range=float_range)
+        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type, method=method, float_range=float_range, stochastic_round=stochastic_round)
         abs_err = abs(map_val - reg_result)
         perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
 
@@ -54,6 +54,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run chained multiplication simulations.")
     parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
+    parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
     args = parser.parse_args()
 
     max_range = float(args.max_range)
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     seed = time.time_ns() % (2**32 - 1)  # new seed each script run, shared by all variants
     np.random.seed(seed)
     print(f"Using seed: {seed}, max_range: {max_range}")
-    chain_length = 1024
+    chain_length = int(args.steps)
 
     # Generate the same initial float and sequence for all simulations,
     # scaled to stay inside the chosen float_range (helps when max_range < 1)
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     init_jitter = 0.05
     fa_init = np.random.uniform(base_mag * (1 - init_jitter), base_mag * (1 + init_jitter))
 
-    jitter = min(0.1, 0.25 * max_range)  # shrink step size when range is small
+    jitter = min(0.1, 0.2 * max_range)  # shrink step size when range is small
     fb_seq = np.random.uniform(1 - jitter, 1 + jitter, size=chain_length)
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
