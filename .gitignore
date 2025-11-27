@@ -1,7 +1,9 @@
-multiplication_maps
-!multiplication_maps/.gitkeep
-.DS_Store
+data/multiplication_maps
+!data/multiplication_maps/.gitkeep
+data/simulation
+!data/simulation/.gitkeep
+.pytest_cache/
 __pycache__/
-simulation
-!simulation/.gitkeep
+*.pyc
+.DS_Store
 .venv/

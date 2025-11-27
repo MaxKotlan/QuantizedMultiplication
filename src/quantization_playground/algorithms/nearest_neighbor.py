@@ -1,4 +1,4 @@
-from multiplication_map_loader import MAP_CONFIG
+from ..maps.loader import MAP_CONFIG
 import numpy as np
 
 def _multiplyIntSpace(a, b, uint8_map):
@@ -37,7 +37,7 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext', float_range=N
         abs_val = np.abs(fz_log)
         fz = sign * ((10 ** abs_val - 1) / 9) * max_range  # inverse of encoding (fz_norm * max_range)
         return fz
-    elif map_type == 'signed_ext_warp':
+    elif map_type == 'signed_ext_warped':
         k = 20.0
         fr_min, fr_max = MAP_CONFIG[map_type]['float_range']
         fz_norm = (ir / 127.5) - 1

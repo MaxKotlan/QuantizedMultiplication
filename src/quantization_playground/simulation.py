@@ -1,9 +1,11 @@
 import argparse
-import numpy as np
-from multiplication_map_loader import MAP_CONFIG, ensure_multiplication_maps
-from test_float import testFloat
-from graph import plotChain
 import time
+import numpy as np
+
+from .maps import MAP_CONFIG, ensure_multiplication_maps
+from .evaluation import evaluate_float
+from .plotting import plotChain
+
 
 def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False):
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
@@ -25,7 +27,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
             fb *= scale * 0.9 + 0.1
             reg_result = regular * fb
 
-        fa_val, fb_val, reg_val, map_val, err = testFloat(mapped, fb, uint8_map, map_type=map_type, method=method, float_range=float_range, stochastic_round=stochastic_round)
+        fa_val, fb_val, reg_val, map_val, err = evaluate_float(mapped, fb, uint8_map, map_type=map_type, method=method, float_range=float_range, stochastic_round=stochastic_round)
         abs_err = abs(map_val - reg_result)
         perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
 
@@ -50,8 +52,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
 
-
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(description="Run chained multiplication simulations.")
     parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
     parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
@@ -97,3 +98,7 @@ if __name__ == "__main__":
                 print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
 
                 plotChain(chain, filename=f"chain_plot_{map_type}_{size}_{method}.png", float_range=float_range)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,9 +1,10 @@
+from pathlib import Path
 import matplotlib.pyplot as plt
-import os
+
+from .paths import SIMULATION_DIR
 
 # Ensure the simulation folder exists
-SIM_FOLDER = "simulation"
-os.makedirs(SIM_FOLDER, exist_ok=True)
+Path(SIMULATION_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def plotChain(chain_data, filename, float_range=None):
@@ -25,7 +26,7 @@ def plotChain(chain_data, filename, float_range=None):
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    full_path = os.path.join(SIM_FOLDER, filename)
+    full_path = SIMULATION_DIR / filename
     plt.savefig(full_path)
     print(f"Plot saved as {full_path}")
     plt.close()

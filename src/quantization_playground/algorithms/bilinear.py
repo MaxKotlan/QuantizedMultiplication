@@ -1,5 +1,5 @@
 import numpy as np
-from multiplication_map_loader import MAP_CONFIG
+from ..maps.loader import MAP_CONFIG
 
 def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed', float_range=None):
     min_f, max_f = float_range if float_range else MAP_CONFIG[map_type]['float_range']
