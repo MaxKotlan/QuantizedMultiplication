@@ -28,7 +28,7 @@ def plotChain(
     bits_label = f"{value_bits}-bit values" if value_bits else "uint8 values"
     labels = legend_labels or {
         "float": baseline_label or "Baseline (float16)",
-        "mapped": lookup_label or f"Lookup table ({bits_label})",
+        "mapped": lookup_label or f"Int lookup ({bits_label})",
     }
     plot_title = title or "Quantized vs float chain"
 

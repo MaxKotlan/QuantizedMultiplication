@@ -145,10 +145,10 @@ def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "flo
                 value_bits = _value_bits_for_size(size)
                 legend_labels = {
                     "float": f"Baseline {baseline_label}",
-                    "mapped": f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit",
+                    "mapped": f"Int lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit grid",
                 }
-                plot_title = f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit vs {baseline_label}"
-                lookup_label = f"Lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit"
+                plot_title = f"{map_type} {size}x{size} int lookup (~{value_bits}-bit, {method}) vs {baseline_label}"
+                lookup_label = f"Int lookup {map_type} {size}x{size} ({method}) ~{value_bits}-bit grid"
                 filename = f"{value_bits}bit/chain_plot_{map_type}_{size}_{method}.png"
                 plotChain(
                     chain,
