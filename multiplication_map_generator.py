@@ -90,23 +90,27 @@ def generateSignedExtendedLog():
 
     for size in map_sizes:
         half = (size - 1) / 2
+        max_mag = 2.0
         gspace = np.zeros((size, size), dtype=np.uint8)
 
         for x in range(size):
             for y in range(size):
-                fx = (x - half) / half * 2   # -2..2
-                fy = (y - half) / half * 2   # -2..2
-                fz = fx * fy                 # -4..4
+                fx = (x - half) / half * max_mag   # -2..2
+                fy = (y - half) / half * max_mag   # -2..2
+                fz = fx * fy                       # -4..4
 
-                # normalize
-                fz_norm = fz / 4             # -1..1
+                # Clamp output to the representable range (-max_mag..max_mag)
+                fz_clamped = np.clip(fz, -max_mag, max_mag)
 
-                # signed log-like scaling
+                # Normalize to [-1, 1]
+                fz_norm = fz_clamped / max_mag
+
+                # Signed log-like scaling for more resolution near zero
                 sign = np.sign(fz_norm)
-                abs_scaled = np.log1p(9 * np.abs(fz_norm)) / np.log(10)  # 0..1
+                abs_scaled = np.log1p(9 * np.abs(fz_norm)) / np.log(10)  # maps 0..1 -> 0..1
                 fz_log = sign * abs_scaled
 
-                # map to 0..255
+                # Map to 0..255
                 gspace[x, y] = np.clip(round((fz_log + 1) * 127.5), 0, 255)
 
         Image.fromarray(gspace).save(f'./multiplication_maps/signed_log_{size}x{size}.png')
@@ -117,4 +121,3 @@ generateSigned()
 generateSignedExtended()
 generateSignedExtendedLog()
 generateSignedExtendedWarped()
-

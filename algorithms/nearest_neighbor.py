@@ -18,11 +18,15 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
     ir = _multiplyIntSpace(ia, ib, uint8_map)
 
     if map_type == 'signed_log':
+        fr_min, fr_max = MAP_CONFIG[map_type]['float_range']
+        max_mag = max(abs(fr_min), abs(fr_max))
+
         # Decode logarithmic mapping
         fz_log = (ir / 127.5) - 1
         sign = np.sign(fz_log)
         abs_val = np.abs(fz_log)
-        fz = sign * ((10 ** abs_val - 1) / 9) * 4  # inverse of encoding
+        fz_norm = (10 ** abs_val - 1) / 9  # inverse of log1p scale
+        fz = sign * fz_norm * max_mag
         return fz
     elif map_type == 'signed_ext_warp':
         k = 20.0
