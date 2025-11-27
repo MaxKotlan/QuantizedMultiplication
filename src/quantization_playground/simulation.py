@@ -102,7 +102,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
 
-def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "float16") -> None:
+def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "float16", show_error: bool = False) -> None:
     float_range = (-max_range, max_range)
     baseline_dtype, baseline_label = _resolve_baseline_dtype(baseline_dtype_name)
 
@@ -159,6 +159,7 @@ def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "flo
                     baseline_label=f"Baseline {baseline_label}",
                     lookup_label=lookup_label,
                     value_bits=value_bits,
+                    show_error=show_error,
                 )
 
 
@@ -167,9 +168,10 @@ def main() -> None:
     parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
     parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
     parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Precision used for the reference multiply (float8 falls back to float16 if unsupported).")
+    parser.add_argument("--show-error", action="store_true", help="Include percent error subplot in saved figures.")
     args = parser.parse_args()
 
-    run_simulation(max_range=float(args.max_range), steps=int(args.steps), baseline_dtype_name=args.baseline_dtype)
+    run_simulation(max_range=float(args.max_range), steps=int(args.steps), baseline_dtype_name=args.baseline_dtype, show_error=args.show_error)
 
 
 if __name__ == "__main__":
