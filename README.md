@@ -10,6 +10,8 @@ This repo explores “integer space” multiplication via precomputed lookup tab
 - `data/`: generated artifacts (`multiplication_maps/` + `simulation/`); gitignored except for `.gitkeep`.
 - `examples/simulation_runs/`: example chain plots from previous runs.
 - `tests/`: quick smoke tests that exercise the lookup + interpolation paths.
+- `python -m quantization_playground.export_examples`: copy the latest `data/simulation/` outputs into `examples/simulation_runs/` (clobbers existing examples).
+- `python -m quantization_playground.batch_export`: run multiple simulations (default 100 and 1000 steps) and export each into `examples/simulation_runs/<steps>_steps/`.
 
 ## Why it matters
 Precomputing products into small integer tables is a crude but fast way to approximate multiplication. If the accumulated error stays small, you could imagine integer‑only pipelines (e.g., quantized ML or special hardware) benefiting from the speed/size of integer math while retaining acceptable accuracy. This repo measures how quickly errors diverge across map sizes, encodings, and numeric ranges.

@@ -102,21 +102,14 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Run chained multiplication simulations.")
-    parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
-    parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
-    parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Precision used for the reference multiply (float8 falls back to float16 if unsupported).")
-    args = parser.parse_args()
-
-    max_range = float(args.max_range)
+def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "float16") -> None:
     float_range = (-max_range, max_range)
-    baseline_dtype, baseline_label = _resolve_baseline_dtype(args.baseline_dtype)
+    baseline_dtype, baseline_label = _resolve_baseline_dtype(baseline_dtype_name)
 
     seed = time.time_ns() % (2**32 - 1)  # new seed each script run, shared by all variants
     np.random.seed(seed)
     print(f"Using seed: {seed}, max_range: {max_range}")
-    chain_length = int(args.steps)
+    chain_length = int(steps)
 
     # Generate the same initial float and sequence for all simulations,
     # scaled to stay inside the chosen float_range (helps when max_range < 1)
@@ -129,7 +122,7 @@ def main() -> None:
 
     map_sizes = [4, 8, 16, 32, 64, 128, 256]
     methods = ['nearest', 'interpolated']
-    map_types = ['signed_ext', 'signed_log']#, 'signed_ext_warped']  # added signed_log here
+    map_types = ['signed_ext', 'signed_log']
 
     # Ensure maps exist (with suffix tied to max_range) and load them
     suffix = f"_r{max_range}".replace('.', '_')
@@ -167,6 +160,16 @@ def main() -> None:
                     lookup_label=lookup_label,
                     value_bits=value_bits,
                 )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run chained multiplication simulations.")
+    parser.add_argument("--max-range", type=float, default=2.0, help="Max magnitude of representable float range (symmetric ±max_range).")
+    parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
+    parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Precision used for the reference multiply (float8 falls back to float16 if unsupported).")
+    args = parser.parse_args()
+
+    run_simulation(max_range=float(args.max_range), steps=int(args.steps), baseline_dtype_name=args.baseline_dtype)
 
 
 if __name__ == "__main__":
