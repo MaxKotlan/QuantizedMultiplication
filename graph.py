@@ -6,10 +6,12 @@ SIM_FOLDER = "simulation"
 os.makedirs(SIM_FOLDER, exist_ok=True)
 
 
-def plotChain(chain_data, filename):
+def plotChain(chain_data, filename, float_range=None):
     steps = [step['step'] for step in chain_data]
     regular = [step['regular_result'] for step in chain_data]
     mapped = [step['mapped_result'] for step in chain_data]
+    max_range = max(abs(float_range[0]), abs(float_range[1])) if float_range else 2.0
+    margin = max_range * 0.1
 
     plt.figure(figsize=(10, 5))
     plt.plot(steps, regular, 'o-', label='Regular float')
@@ -19,7 +21,7 @@ def plotChain(chain_data, filename):
     plt.ylabel("Value")
     # Fix axes so different runs are directly comparable
     plt.xlim(0, max(steps) if steps else 1)
-    plt.ylim(-2.2, 2.2)
+    plt.ylim(-max_range - margin, max_range + margin)
     plt.legend()
     plt.grid(True)
     plt.tight_layout()

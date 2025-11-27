@@ -1,8 +1,8 @@
 import numpy as np
 from multiplication_map_loader import MAP_CONFIG
 
-def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed'):
-    min_f, max_f = MAP_CONFIG[map_type]['float_range']
+def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed', float_range=None):
+    min_f, max_f = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     size = uint8_map.shape[0]
     map_max = np.max(uint8_map)
     scale = (size - 1) / (max_f - min_f)
@@ -31,7 +31,8 @@ def multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type='signed'):
         fz_log = (val / half_max) - 1
         sign = np.sign(fz_log)
         abs_val = np.abs(fz_log)
-        fz = sign * ((10 ** abs_val - 1) / 9) * 4
+        max_range = max(abs(min_f), abs(max_f))
+        fz = sign * ((10 ** abs_val - 1) / 9) * max_range
         return fz
     else:
         scale_out = map_max / (max_f - min_f)

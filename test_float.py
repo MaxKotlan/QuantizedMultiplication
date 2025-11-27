@@ -1,14 +1,14 @@
 from multiplication_map_loader import load_multiplication_map, MAP_CONFIG
 from algorithms import nearest_neighbor, bilinear
 
-def testFloat(fa, fb, uint8_map, map_type='signed', method='interpolated'):
+def testFloat(fa, fb, uint8_map, map_type='signed', method='interpolated', float_range=None):
     regular = fa * fb
     if method == 'nearest':
-        mapped_value = nearest_neighbor.multiplyFloatSpaceNN(fa, fb, uint8_map, map_type)
+        mapped_value = nearest_neighbor.multiplyFloatSpaceNN(fa, fb, uint8_map, map_type, float_range=float_range)
     else:
-        mapped_value = bilinear.multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type)
+        mapped_value = bilinear.multiplyFloatSpaceInterpolated(fa, fb, uint8_map, map_type, float_range=float_range)
 
-    fr = MAP_CONFIG[map_type]['float_range']
+    fr = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     max_abs = max(abs(fr[0]), abs(fr[1]))
     error_percent = abs(mapped_value - regular) * 100 / max_abs
     return fa, fb, regular, mapped_value, error_percent

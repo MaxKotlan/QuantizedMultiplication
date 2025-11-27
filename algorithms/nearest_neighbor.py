@@ -8,8 +8,8 @@ def _multiplyIntSpace(a, b, uint8_map):
     y = int(np.clip(b, 0, size - 1))
     return uint8_map[x, y]
 
-def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
-    min_f, max_f = MAP_CONFIG[map_type]['float_range']
+def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext', float_range=None):
+    min_f, max_f = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     size = uint8_map.shape[0]
     map_max = np.max(uint8_map)
     scale_in = (size - 1) / (max_f - min_f)
@@ -25,12 +25,13 @@ def multiplyFloatSpaceNN(fa, fb, uint8_map, map_type='signed_ext'):
     ir = _multiplyIntSpace(ia, ib, uint8_map)
 
     if map_type == 'signed_log':
+        max_range = max(abs(min_f), abs(max_f))
         half_max = max(map_max / 2, 1e-9)
         # Decode logarithmic mapping
         fz_log = (ir / half_max) - 1
         sign = np.sign(fz_log)
         abs_val = np.abs(fz_log)
-        fz = sign * ((10 ** abs_val - 1) / 9) * 4  # inverse of encoding (fz_norm * 4)
+        fz = sign * ((10 ** abs_val - 1) / 9) * max_range  # inverse of encoding (fz_norm * max_range)
         return fz
     elif map_type == 'signed_ext_warp':
         k = 20.0
