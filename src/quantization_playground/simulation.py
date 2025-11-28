@@ -51,6 +51,7 @@ def _value_bits_for_size(size: int) -> int:
 def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False, baseline_dtype=np.float32):
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
+    max_abs = max(abs(fr_min), abs(fr_max))
     chain_data = []
 
     regular = fa_init
@@ -79,7 +80,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
             baseline_dtype=baseline_dtype,
         )
         abs_err = abs(map_val - reg_result)
-        perc_err = (abs_err / abs(reg_result) * 100) if abs(reg_result) > 1e-6 else 0.0
+        perc_err = (abs_err / max_abs * 100) if max_abs > 1e-12 else 0.0
 
         chain_data.append({
             "step": i,
@@ -97,7 +98,7 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
     final_reg = regular
     final_map = mapped
     final_abs_error = abs(final_map - final_reg)
-    final_perc_error = (final_abs_error / abs(final_reg) * 100) if abs(final_reg) > 1e-6 else 0.0
+    final_perc_error = (final_abs_error / max_abs * 100) if max_abs > 1e-12 else 0.0
 
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
@@ -116,6 +117,7 @@ def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='
     """
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
+    max_abs = max(abs(fr_min), abs(fr_max))
     chain_data = []
 
     regular_sum = baseline_dtype.type(0.0)
@@ -151,7 +153,7 @@ def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='
         mapped_sum = baseline_dtype.type(map_sum_sat)
 
         abs_err = abs(mapped_sum - regular_sum)
-        perc_err = (abs_err / abs(regular_sum) * 100) if abs(regular_sum) > 1e-6 else 0.0
+        perc_err = (abs_err / max_abs * 100) if max_abs > 1e-12 else 0.0
 
         chain_data.append({
             "step": i,
@@ -166,7 +168,7 @@ def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='
         })
 
     final_abs_error = abs(mapped_sum - regular_sum)
-    final_perc_error = (final_abs_error / abs(regular_sum) * 100) if abs(regular_sum) > 1e-6 else 0.0
+    final_perc_error = (final_abs_error / max_abs * 100) if max_abs > 1e-12 else 0.0
 
     stats = {"product_saturations": prod_clamps, "sum_saturations": sum_clamps}
     return chain_data, regular_sum, mapped_sum, final_abs_error, final_perc_error, stats
