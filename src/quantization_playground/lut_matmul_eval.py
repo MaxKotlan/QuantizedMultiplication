@@ -68,6 +68,15 @@ def _parse_map_sizes(arg: str) -> list[int]:
     return sizes
 
 
+def _auto_range(weight_slice: np.ndarray, input_vec: np.ndarray, margin: float = 0.1, fallback: float = 1.0) -> float:
+    max_w = float(np.max(np.abs(weight_slice))) if weight_slice.size else 0.0
+    max_in = float(np.max(np.abs(input_vec))) if input_vec.size else 0.0
+    base = max(max_w, max_in, 0.0)
+    if base <= 0:
+        return fallback
+    return base * (1.0 + margin)
+
+
 def _generate_input(cols: int, baseline_dtype: np.dtype, input_path: Path | None = None) -> np.ndarray:
     if input_path:
         vec = np.load(input_path)
@@ -145,7 +154,8 @@ def main() -> None:
     parser.add_argument("--rows", type=int, default=1, help="Number of rows to evaluate from the tensor (default 1).")
     parser.add_argument("--cols", type=int, default=None, help="Number of columns to use (prefix). Defaults to full width.")
     parser.add_argument("--input", type=Path, default=None, help="Optional .npy input vector. If omitted, a random vector is generated.")
-    parser.add_argument("--max-range", type=float, default=2.0, help="Float range ±R for the LUT maps.")
+    parser.add_argument("--max-range", type=float, default=2.0, help="Float range ±R for the LUT maps (ignored if --auto-max-range).")
+    parser.add_argument("--auto-max-range", action="store_true", help="Derive range from tensor/input magnitudes (adds ~10 percent margin).")
     parser.add_argument("--method", type=str, default="both", choices=["nearest", "interpolated", "both"], help="Lookup method (or 'both' to run both).")
     parser.add_argument("--map-type", type=str, default="all", choices=list(MAP_CONFIG.keys()) + ["all"], help="Map encoding to use (or 'all' to run signed_ext and signed_log).")
     parser.add_argument("--map-sizes", type=str, default="auto", help="Comma-separated map sizes (e.g., 16,32,64). Use 'auto' to run 4,8,16,32,64,128,256,512.")
@@ -172,18 +182,21 @@ def main() -> None:
 
     input_vec = _generate_input(weight_slice.shape[1], baseline_dtype, input_path=args.input)
 
-    float_range = (-args.max_range, args.max_range)
+    max_range = _auto_range(weight_slice, input_vec) if args.auto_max_range else args.max_range
+    float_range = (-max_range, max_range)
     map_sizes = _parse_map_sizes(args.map_sizes)
     map_types = ["signed_ext", "signed_log"] if args.map_type == "all" else [args.map_type]
     methods = ["nearest", "interpolated"] if args.method == "both" else [args.method]
     model_label = _model_name(reader, model_path)
+    if args.auto_max_range:
+        print(f"Auto max_range derived from data: {max_range:.4f}")
 
     for map_type in map_types:
-        maps = ensure_multiplication_maps(map_sizes, map_type=map_type, max_range=args.max_range)
+        maps = ensure_multiplication_maps(map_sizes, map_type=map_type, max_range=max_range)
         for map_size in map_sizes:
             uint8_map = maps[map_size]
             for method in methods:
-                print(f"\nEvaluating tensor '{args.tensor}' slice {weight_slice.shape} | map={map_type} size={map_size} method={method} max_range={args.max_range}, baseline={baseline_label}")
+                print(f"\nEvaluating tensor '{args.tensor}' slice {weight_slice.shape} | map={map_type} size={map_size} method={method} max_range={max_range}, baseline={baseline_label}")
                 rows = evaluate_tensor_rows(
                     weight_slice,
                     input_vec,
