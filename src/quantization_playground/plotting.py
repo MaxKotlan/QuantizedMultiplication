@@ -17,6 +17,7 @@ def plotChain(
     lookup_label=None,
     value_bits=None,
     show_error=False,
+    ylabel="Accumulated product",
 ):
     steps = [step['step'] for step in chain_data]
     regular = [step['regular_result'] for step in chain_data]
@@ -46,7 +47,7 @@ def plotChain(
     ax_top.plot(steps, mapped, 's-', label=labels.get("mapped", "Lookup table (uint8)"))
     ax_top.set_title(plot_title)
     ax_top.set_xlabel("Chain step")
-    ax_top.set_ylabel("Accumulated product")
+    ax_top.set_ylabel(ylabel)
     ax_top.set_xlim(0, max(steps) if steps else 1)
     ax_top.set_ylim(-max_range - margin, max_range + margin)
     ax_top.legend()

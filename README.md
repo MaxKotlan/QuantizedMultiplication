@@ -30,6 +30,7 @@ python -m pip install -e .
 MPLCONFIGDIR="$PWD/.mplconfig" . .venv/bin/activate && \
 python -m quantization_playground.simulation --max-range 2.0 --steps 1024 --baseline-dtype float16
 ```
+- Pass `--simulation-type dot` to switch from the default chained multiply walk to a multiply‑accumulate (dot product) run, which mimics matrix multiplication-style error accumulation.
 - `--max-range`: symmetric range ±R encoded in the maps (default 2.0).
 - `--steps`: length of the multiplication chain (default 1024).
 - `--baseline-dtype`: reference precision (`float16` by default; `float32`/`float64` available; `float8` if your NumPy build supports it, otherwise it falls back to float16 with a note).

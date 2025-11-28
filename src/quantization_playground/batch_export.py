@@ -23,12 +23,19 @@ def main():
     parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Reference precision (float8 allowed; falls back to float16 if unsupported).")
     parser.add_argument("--show-error", action="store_true", help="Include percent error subplot in saved figures.")
     parser.add_argument("--dest-root", type=Path, default=PROJECT_ROOT / "examples" / "simulation_runs", help="Root folder for exports.")
+    parser.add_argument("--simulation-type", type=str, default="chain", choices=["chain", "dot"], help="Choose chained multiplies (chain) or multiply-accumulate (dot) simulation.")
     args = parser.parse_args()
 
     steps_list = parse_steps(args.steps)
     for steps in steps_list:
         print(f"\n--- Running simulation for {steps} steps ---")
-        run_simulation(max_range=args.max_range, steps=steps, baseline_dtype_name=args.baseline_dtype, show_error=args.show_error)
+        run_simulation(
+            max_range=args.max_range,
+            steps=steps,
+            baseline_dtype_name=args.baseline_dtype,
+            show_error=args.show_error,
+            simulation_type=args.simulation_type,
+        )
 
         dest = Path(args.dest_root) / f"{steps}_steps"
         export_simulation_examples(dest=dest, force=True)
