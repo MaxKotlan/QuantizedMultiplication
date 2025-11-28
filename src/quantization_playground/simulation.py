@@ -102,14 +102,26 @@ def testLongLivingChain(uint8_map, fa_init, fb_seq, map_type='signed_ext', metho
     return chain_data, final_reg, final_map, final_abs_error, final_perc_error
 
 
+def _saturate(val, fr_min, fr_max):
+    """Clamp a value to the representable float range."""
+    return np.clip(val, fr_min, fr_max)
+
+
 def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='interpolated', float_range=None, stochastic_round=False, baseline_dtype=np.float32):
-    """Simulate multiply-then-accumulate (dot product) using the lookup table."""
+    """
+    Simulate multiply-then-accumulate (dot product) using the lookup table.
+
+    Products and the running sum are saturated to the map's float range to mimic
+    bounded quantized math (similar to matrix-multiply accumulators with a fixed range).
+    """
     fr_min, fr_max = float_range if float_range else MAP_CONFIG[map_type]['float_range']
     float_range = (fr_min, fr_max)
     chain_data = []
 
     regular_sum = baseline_dtype.type(0.0)
     mapped_sum = baseline_dtype.type(0.0)
+    prod_clamps = 0
+    sum_clamps = 0
 
     for i, (fa, fb) in enumerate(zip(fa_seq, fb_seq)):
         fa_val, fb_val, reg_prod, map_prod, _ = evaluate_float(
@@ -122,8 +134,21 @@ def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='
             stochastic_round=stochastic_round,
             baseline_dtype=baseline_dtype,
         )
-        regular_sum = baseline_dtype.type(regular_sum + reg_prod)
-        mapped_sum = baseline_dtype.type(mapped_sum + map_prod)
+        reg_prod_sat = _saturate(reg_prod, fr_min, fr_max)
+        map_prod_sat = _saturate(map_prod, fr_min, fr_max)
+        if reg_prod_sat != reg_prod or map_prod_sat != map_prod:
+            prod_clamps += 1
+
+        regular_sum = baseline_dtype.type(regular_sum + reg_prod_sat)
+        mapped_sum = baseline_dtype.type(mapped_sum + map_prod_sat)
+
+        reg_sum_sat = _saturate(regular_sum, fr_min, fr_max)
+        map_sum_sat = _saturate(mapped_sum, fr_min, fr_max)
+        if reg_sum_sat != regular_sum or map_sum_sat != mapped_sum:
+            sum_clamps += 1
+
+        regular_sum = baseline_dtype.type(reg_sum_sat)
+        mapped_sum = baseline_dtype.type(map_sum_sat)
 
         abs_err = abs(mapped_sum - regular_sum)
         perc_err = (abs_err / abs(regular_sum) * 100) if abs(regular_sum) > 1e-6 else 0.0
@@ -143,15 +168,18 @@ def testSumOfProducts(uint8_map, fa_seq, fb_seq, map_type='signed_ext', method='
     final_abs_error = abs(mapped_sum - regular_sum)
     final_perc_error = (final_abs_error / abs(regular_sum) * 100) if abs(regular_sum) > 1e-6 else 0.0
 
-    return chain_data, regular_sum, mapped_sum, final_abs_error, final_perc_error
+    stats = {"product_saturations": prod_clamps, "sum_saturations": sum_clamps}
+    return chain_data, regular_sum, mapped_sum, final_abs_error, final_perc_error, stats
 
 
 def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "float16", show_error: bool = False, simulation_type: str = "chain") -> None:
     float_range = (-max_range, max_range)
     baseline_dtype, baseline_label = _resolve_baseline_dtype(baseline_dtype_name)
     simulation_type = simulation_type.lower()
+    if simulation_type == "matmul":
+        simulation_type = "dot"
     if simulation_type not in {"chain", "dot"}:
-        raise ValueError(f"Unsupported simulation_type '{simulation_type}'. Use 'chain' or 'dot'.")
+        raise ValueError(f"Unsupported simulation_type '{simulation_type}'. Use 'chain', 'dot', or 'matmul'.")
 
     seed = time.time_ns() % (2**32 - 1)  # new seed each script run, shared by all variants
     np.random.seed(seed)
@@ -192,15 +220,17 @@ def run_simulation(max_range: float, steps: int, baseline_dtype_name: str = "flo
                     filename_prefix = "chain"
                     mode_label = "Chain multiply"
                 else:
-                    chain, f_reg, f_map, f_abs, f_perc = testSumOfProducts(
+                    chain, f_reg, f_map, f_abs, f_perc, stats = testSumOfProducts(
                         uint8_map, dot_seq_a, dot_seq_b, map_type=map_type, method=method, float_range=float_range, baseline_dtype=baseline_dtype
                     )
                     ylabel = "Accumulated sum"
                     filename_prefix = "dot"
-                    mode_label = "Sum of products"
+                    mode_label = "Sum of products (matmul-like)"
 
                 print(f"\n=== [{mode_label}] Map type: {map_type}, Size: {size}, Method: {method} ===")
                 print(f"Final regular: {f_reg:.6f}, mapped: {f_map:.6f}, abs_err: {f_abs:.6f}, perc_err: {f_perc:.2f}%")
+                if simulation_type == "dot":
+                    print(f"Saturations — products: {stats['product_saturations']}, sums: {stats['sum_saturations']}")
 
                 value_bits = _value_bits_for_size(size)
                 legend_labels = {
@@ -230,7 +260,7 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=1024, help="Number of chain steps to run.")
     parser.add_argument("--baseline-dtype", type=str, default="float16", choices=BASELINE_CHOICES, help="Precision used for the reference multiply (float8 falls back to float16 if unsupported).")
     parser.add_argument("--show-error", action="store_true", help="Include percent error subplot in saved figures.")
-    parser.add_argument("--simulation-type", type=str, default="chain", choices=["chain", "dot"], help="Choose chained multiplies (chain) or multiply-accumulate (dot) simulation.")
+    parser.add_argument("--simulation-type", type=str, default="chain", choices=["chain", "dot", "matmul"], help="Choose chained multiplies (chain) or multiply-accumulate (dot/matmul) simulation.")
     args = parser.parse_args()
 
     run_simulation(
